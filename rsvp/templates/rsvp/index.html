@@ -1,0 +1,126 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sóstenes &amp; Emilly | Casamento</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Marcellus&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'rsvp/css/style.css' %}">
+</head>
+
+<body>
+
+    <div class="frame-wrapper">
+        <div class="invite-frame">
+
+            <header class="text-center">
+                <img class="logo-img" src="{% static 'LOGO VETORIZADA COMPLETA.png' %}" alt="Sóstenes &amp; Emilly">
+                <h1 class="couple-names mt-2 mb-0">
+                    <img class="couple-names-img" src="{% static 'Nome do casal.png' %}" alt="Sóstenes &amp; Emilly">
+                </h1>
+
+                <div class="date-row my-4">
+                    <span class="date-month">OUT</span>
+                    <span class="date-day">10</span>
+                    <span class="date-year">2026</span>
+                </div>
+                <p class="hour">às 15:00 horas</p>
+
+                <p class="location mb-0">Local: Fazenda Santa Clara, às margens da PE-85 — Ribeirão/PE</p>
+            </header>
+
+            <hr class="divider my-4">
+
+            <section id="rsvp" class="rsvp-section">
+                <h2 class="section-title text-center mb-2">Confirme sua presença</h2>
+                <p class="section-subtitle text-center mb-4">
+                    Digite o número do convite que você recebeu para confirmar (ou atualizar a confirmação de) sua
+                    presença.
+                </p>
+
+                <div class="rsvp-card mx-auto">
+
+                    <div id="alert-box" class="alert d-none" role="alert"></div>
+
+                    <!-- Passo 1: número do convite -->
+                    <div id="step-number">
+                        <label for="invite-number" class="form-label">Número do convite</label>
+                        <div class="input-group">
+                            <input type="text" id="invite-number" class="form-control" placeholder="Ex: 01"
+                                inputmode="numeric" maxlength="10">
+                            <button class="btn btn-theme" type="button" id="btn-buscar">Buscar</button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Modal: nomes dos convidados / sucesso -->
+    <div id="rsvp-modal-backdrop" class="modal-backdrop-custom d-none">
+        <div class="modal-box-custom">
+            <button type="button" class="modal-close-btn" id="btn-modal-close" aria-label="Fechar">&times;</button>
+
+            <div id="modal-alert-box" class="alert d-none" role="alert"></div>
+
+            <!-- Passo 2: nomes dos convidados -->
+            <div id="step-names">
+                <p class="mb-1"><strong>Convite <span id="found-number"></span></strong></p>
+                <p id="already-confirmed-msg" class="text-muted small d-none mb-3"></p>
+                <p class="mb-1">Este convite foi direcionado a <strong><span id="found-passes"></span></strong>
+                    pessoa(s).</p>
+                <p class="form-subtitle mb-3">Preencha o nome de quem vai comparecer. Se alguém não puder ir,
+                    deixe o campo em branco.</p>
+
+                <div id="names-fields"></div>
+
+                <button class="btn btn-outline-theme btn-sm mt-1 mb-3" type="button" id="btn-add-guest">+ Adicionar
+                    convidado</button>
+
+                <div class="d-flex flex-column flex-sm-row gap-2 mt-3">
+                    <button class="btn btn-theme flex-fill" type="button" id="btn-confirmar">Confirmar
+                        presença</button>
+                    <button class="btn btn-outline-theme flex-fill" type="button" id="btn-voltar">Voltar</button>
+                </div>
+            </div>
+
+            <!-- Passo 3: sucesso -->
+            <div id="step-success" class="d-none text-center">
+                <p class="success-icon mb-2">&#10003;</p>
+                <p class="mb-1">Presença confirmada com sucesso!</p>
+                <p class="text-muted small mb-3">Você poderá voltar aqui a qualquer momento para atualizar.</p>
+
+                <hr class="divider my-4">
+
+                <p class="eyebrow mb-3">Lista de presentes</p>
+                <a class="btn btn-outline-theme d-block mb-3" href="https://sites.icasei.com.br/sosteneseemilly"
+                    target="_blank" rel="noopener">
+                    Acessar lista de presentes
+                </a>
+
+                <button class="btn btn-link btn-sm" type="button" id="btn-nova-consulta">Consultar outro
+                    convite</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        window.RSVP_CONFIG = {
+            buscarUrl: "{% url 'rsvp:buscar_convite' %}",
+            confirmarUrl: "{% url 'rsvp:confirmar_presenca' %}",
+            csrfToken: "{{ csrf_token }}"
+        };
+    </script>
+    <script src="{% static 'rsvp/js/main.js' %}"></script>
+</body>
+
+</html>

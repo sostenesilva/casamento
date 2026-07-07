@@ -1,0 +1,223 @@
+:root {
+    --color-cream: #f3ede2;
+    --color-cream-soft: #faf7f0;
+    --color-green-dark: #2c3419;
+    --color-green-sage: #7f8f6c;
+    --color-green-sage-dark: #66765a;
+    --color-gold: #c39b5e;
+    --color-text: #3a3a30;
+}
+
+html, body {
+    overflow-x: hidden;
+}
+
+body {
+    background-color: var(--color-cream);
+    color: var(--color-text);
+    font-family: 'Marcellus', 'Cormorant Garamond', serif;
+    margin: 0;
+    padding: 0;
+}
+
+.frame-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem 3rem;
+}
+
+.invite-frame {
+    width: 100%;
+    max-width: 640px;
+    background-color: var(--color-cream-soft);
+    border: 1.5px solid var(--color-green-sage);
+    border-radius: 4px;
+    padding: 2.5rem 1.75rem 2.5rem;
+}
+
+@media (min-width: 576px) {
+    .invite-frame {
+        padding: 3.5rem 3rem 3rem;
+    }
+}
+
+.logo-img {
+    width: 160px;
+    max-width: 60%;
+    height: auto;
+}
+
+.eyebrow {
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    color: var(--color-green-sage-dark);
+}
+
+.couple-names {
+    line-height: 0;
+}
+
+.couple-names-img {
+    width: 320px;
+    max-width: 85%;
+    height: auto;
+}
+
+@media (min-width: 576px) {
+    .couple-names-img {
+        width: 420px;
+    }
+}
+
+.date-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.75rem;
+    letter-spacing: 0.1em;
+}
+
+.date-month, .date-year {
+    font-size: 1.1rem;
+    text-transform: uppercase;
+}
+
+.date-day {
+    font-size: 2.75rem;
+    color: var(--color-gold);
+    border-left: 1px solid var(--color-green-sage);
+    border-right: 1px solid var(--color-green-sage);
+    padding: 0 0.75rem;
+}
+
+.hour {
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+.location {
+    font-size: 0.95rem;
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid var(--color-green-sage);
+    opacity: 0.5;
+}
+
+.section-title {
+    color: var(--color-green-sage-dark);
+    font-size: 1.6rem;
+}
+
+.section-subtitle {
+    font-size: 0.95rem;
+    color: var(--color-text);
+}
+
+.rsvp-card {
+    max-width: 420px;
+    background: #fff;
+    border: 1px solid var(--color-green-sage);
+    border-radius: 6px;
+    padding: 1.5rem;
+}
+
+.form-label {
+    font-size: 0.9rem;
+    color: var(--color-green-sage-dark);
+}
+
+.form-subtitle {
+    font-size: 0.82rem;
+    font-style: italic;
+    color: var(--color-text);
+    opacity: 0.75;
+}
+
+.form-control {
+    border-color: var(--color-green-sage);
+}
+
+.form-control:focus {
+    border-color: var(--color-green-sage-dark);
+    box-shadow: 0 0 0 0.2rem rgba(127, 143, 108, 0.25);
+}
+
+.btn-theme {
+    background-color: var(--color-green-sage-dark);
+    border-color: var(--color-green-sage-dark);
+    color: #fff;
+}
+
+.btn-theme:hover, .btn-theme:focus {
+    background-color: var(--color-green-dark);
+    border-color: var(--color-green-dark);
+    color: #fff;
+}
+
+.btn-outline-theme {
+    border-color: var(--color-green-sage-dark);
+    color: var(--color-green-sage-dark);
+}
+
+.btn-outline-theme:hover, .btn-outline-theme:focus {
+    background-color: var(--color-green-sage-dark);
+    border-color: var(--color-green-sage-dark);
+    color: #fff;
+}
+
+.guest-name-input {
+    margin-bottom: 0.75rem;
+}
+
+.success-icon {
+    font-size: 2.5rem;
+    color: var(--color-green-sage-dark);
+}
+
+.modal-backdrop-custom {
+    position: fixed;
+    inset: 0;
+    background: rgba(44, 52, 25, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    z-index: 1050;
+}
+
+.modal-box-custom {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--color-green-sage);
+    border-radius: 6px;
+    padding: 1.75rem 1.5rem 1.5rem;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.6rem;
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    line-height: 1;
+    padding: 0.25rem 0.5rem;
+    color: var(--color-green-sage-dark);
+    cursor: pointer;
+}
+
+.modal-close-btn:hover {
+    color: var(--color-green-dark);
+}
+
+body.modal-open {
+    overflow: hidden;
+}
