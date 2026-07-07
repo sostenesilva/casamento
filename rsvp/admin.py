@@ -10,9 +10,9 @@ class GuestInline(admin.TabularInline):
 
 @admin.register(Invite)
 class InviteAdmin(admin.ModelAdmin):
-    list_display = ("number", "num_passes", "confirmed", "confirmed_at")
+    list_display = ("number", "recipient_name", "num_passes", "confirmed", "confirmed_at")
     list_filter = ("confirmed",)
-    search_fields = ("number",)
+    search_fields = ("number", "recipient_name")
     inlines = [GuestInline]
 
 

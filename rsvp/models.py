@@ -4,6 +4,12 @@ from django.db import models
 class Invite(models.Model):
     number = models.CharField("Número do convite", max_length=10, unique=True)
     num_passes = models.PositiveSmallIntegerField("Quantidade de senhas")
+    recipient_name = models.CharField(
+        "Nome do convidado (uso interno)",
+        max_length=150,
+        blank=True,
+        help_text="Anotação só para uso administrativo: a quem esse convite foi entregue. Não aparece no site.",
+    )
     confirmed = models.BooleanField("Confirmado", default=False)
     confirmed_at = models.DateTimeField("Confirmado em", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
