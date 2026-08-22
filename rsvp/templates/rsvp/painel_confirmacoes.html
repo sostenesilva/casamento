@@ -1,0 +1,105 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .painel-stats { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0 24px; }
+  .painel-stats .stat { background: var(--body-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 16px; min-width: 140px; }
+  .painel-stats .stat strong { display: block; font-size: 22px; }
+  .painel-filter { margin-bottom: 16px; }
+  .painel-filter input { width: 320px; max-width: 100%; padding: 6px 8px; }
+  table#painel-table { width: 100%; }
+  table#painel-table th, table#painel-table td { vertical-align: top; padding: 8px; }
+  table#painel-table ul { margin: 0; padding-left: 18px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+  .badge-ok { background: #d7f5df; color: #16702c; }
+  .badge-pending { background: #eee; color: #666; }
+  .badge-warn { background: #fdeecb; color: #8a5a00; }
+  .expected-not-confirmed { opacity: 0.6; }
+  .confirmed-mismatch { color: #8a5a00; font-weight: bold; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<div class="painel-stats">
+  <div class="stat"><span>Convites</span><strong>{{ total_invites }}</strong></div>
+  <div class="stat"><span>Confirmados</span><strong>{{ confirmed_invites }}</strong></div>
+  <div class="stat"><span>Pendentes</span><strong>{{ pending_invites }}</strong></div>
+  <div class="stat"><span>Convidados esperados (uso interno)</span><strong>{{ total_expected_guests }}</strong></div>
+  <div class="stat"><span>Convidados confirmados</span><strong>{{ total_confirmed_guests }}</strong></div>
+</div>
+
+<div class="painel-filter">
+  <input type="text" id="painel-search" placeholder="Filtrar por número do convite ou nome...">
+</div>
+
+<table id="painel-table">
+  <thead>
+    <tr>
+      <th>Convite</th>
+      <th>Senhas</th>
+      <th>Status</th>
+      <th>Convidados esperados (uso interno)</th>
+      <th>Convidados confirmados (site)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr class="painel-row" data-search="{{ row.invite.number }} {% for g in row.expected %}{{ g.name }} {% endfor %}{% for g in row.confirmed %}{{ g.name }} {% endfor %}">
+      <td>
+        <a href="{% url 'admin:rsvp_invite_change' row.invite.pk %}">{{ row.invite.number }}</a>
+      </td>
+      <td>{{ row.invite.num_passes }}</td>
+      <td>
+        {% if row.invite.confirmed %}
+          <span class="badge badge-ok">Confirmado em {{ row.invite.confirmed_at|date:"d/m/Y H:i" }}</span>
+        {% else %}
+          <span class="badge badge-pending">Pendente</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if row.expected %}
+        <ul>
+          {% for g in row.expected %}
+          <li class="{% if not g.was_confirmed %}expected-not-confirmed{% endif %}">
+            {{ g.slot }}. <a href="{% url 'admin:rsvp_expectedguest_change' g.pk %}">{{ g.name }}</a>
+            {% if g.was_confirmed %}<span class="badge badge-ok">confirmado</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <em>Nenhum cadastrado</em>
+        {% endif %}
+      </td>
+      <td>
+        {% if row.confirmed %}
+        <ul>
+          {% for g in row.confirmed %}
+          <li>
+            {{ g.slot }}.
+            <a href="{% url 'admin:rsvp_guest_change' g.pk %}" {% if not g.matches_expected %}class="confirmed-mismatch"{% endif %}>{{ g.name }}</a>
+            {% if not g.matches_expected %}<span class="badge badge-warn" title="Não bate com nenhum nome esperado">nome diferente</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <em>Ainda não confirmado</em>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+document.getElementById("painel-search").addEventListener("input", function (e) {
+  var term = e.target.value.trim().toLowerCase();
+  document.querySelectorAll(".painel-row").forEach(function (row) {
+    var haystack = row.getAttribute("data-search").toLowerCase();
+    row.style.display = haystack.indexOf(term) === -1 ? "none" : "";
+  });
+});
+</script>
+{% endblock %}

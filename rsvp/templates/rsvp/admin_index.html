@@ -1,0 +1,12 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+<div class="module" style="margin-bottom: 20px;">
+  <table>
+    <caption>
+      <a href="{% url 'rsvp:painel_confirmacoes' %}" class="section">Painel de confirmações</a>
+    </caption>
+  </table>
+</div>
+{{ block.super }}
+{% endblock %}

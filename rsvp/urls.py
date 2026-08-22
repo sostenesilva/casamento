@@ -8,4 +8,5 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("api/convite/buscar/", views.buscar_convite, name="buscar_convite"),
     path("api/convite/confirmar/", views.confirmar_presenca, name="confirmar_presenca"),
+    path("painel-confirmacoes/", views.painel_confirmacoes, name="painel_confirmacoes"),
 ]

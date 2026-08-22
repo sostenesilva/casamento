@@ -2,6 +2,8 @@ from django.contrib import admin
 
 from .models import ExpectedGuest, Guest, Invite
 
+admin.site.index_template = "rsvp/admin_index.html"
+
 
 class ExpectedGuestInline(admin.TabularInline):
     model = ExpectedGuest

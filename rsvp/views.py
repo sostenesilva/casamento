@@ -1,16 +1,56 @@
 import json
 
+from django.contrib import admin
+from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
-from .models import Guest, Invite
+from .models import ExpectedGuest, Guest, Invite
 
 
 @require_GET
 def index(request):
     return render(request, "rsvp/index.html")
+
+
+@staff_member_required
+def painel_confirmacoes(request):
+    invites = Invite.objects.prefetch_related("expected_guests", "guests").order_by("number")
+
+    rows = []
+    confirmed_invites = 0
+    total_confirmed_guests = 0
+
+    for invite in invites:
+        expected = list(invite.expected_guests.all())
+        confirmed = list(invite.guests.all())
+        confirmed_names = {g.name.strip().lower() for g in confirmed}
+        expected_names = {g.name.strip().lower() for g in expected}
+
+        for g in expected:
+            g.was_confirmed = g.name.strip().lower() in confirmed_names
+        for g in confirmed:
+            g.matches_expected = g.name.strip().lower() in expected_names
+
+        if invite.confirmed:
+            confirmed_invites += 1
+        total_confirmed_guests += len(confirmed)
+
+        rows.append({"invite": invite, "expected": expected, "confirmed": confirmed})
+
+    context = {
+        **admin.site.each_context(request),
+        "title": "Painel de confirmações",
+        "rows": rows,
+        "total_invites": invites.count(),
+        "confirmed_invites": confirmed_invites,
+        "pending_invites": invites.count() - confirmed_invites,
+        "total_expected_guests": ExpectedGuest.objects.count(),
+        "total_confirmed_guests": total_confirmed_guests,
+    }
+    return render(request, "rsvp/painel_confirmacoes.html", context)
 
 
 def _find_invite(number):
