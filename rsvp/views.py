@@ -81,6 +81,24 @@ def alternar_reconfirmado_whatsapp(request, invite_id):
     return JsonResponse({"ok": True, "reconfirmed_by_whatsapp": invite.reconfirmed_by_whatsapp})
 
 
+@login_required
+@require_POST
+def atualizar_contato_whatsapp(request, invite_id):
+    invite = get_object_or_404(Invite, pk=invite_id)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "Requisição inválida."}, status=400)
+
+    whatsapp = str(data.get("whatsapp", "")).strip()
+    if len(whatsapp) > 20:
+        return JsonResponse({"ok": False, "error": "Número muito longo (máx. 20 caracteres)."}, status=400)
+
+    invite.whatsapp = whatsapp
+    invite.save(update_fields=["whatsapp", "updated_at"])
+    return JsonResponse({"ok": True, "whatsapp": invite.whatsapp})
+
+
 def _find_invite(number):
     try:
         return Invite.objects.get(number__iexact=number)

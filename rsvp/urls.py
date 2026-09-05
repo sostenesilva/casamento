@@ -19,4 +19,9 @@ urlpatterns = [
         views.alternar_reconfirmado_whatsapp,
         name="alternar_reconfirmado_whatsapp",
     ),
+    path(
+        "convites/<int:invite_id>/contato/",
+        views.atualizar_contato_whatsapp,
+        name="atualizar_contato_whatsapp",
+    ),
 ]

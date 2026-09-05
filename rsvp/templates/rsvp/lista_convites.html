@@ -11,6 +11,8 @@
         body { background-color: #f7f7f5; }
         .table td, .table th { vertical-align: middle; }
         .name-list { margin: 0; padding-left: 1.1rem; }
+        .whatsapp-cell { min-width: 190px; }
+        .whatsapp-edit-form { min-width: 220px; }
     </style>
 </head>
 
@@ -59,11 +61,25 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if row.invite.whatsapp %}
-                            <a href="https://wa.me/55{{ row.invite.whatsapp|cut:"("|cut:")"|cut:"-"|cut:" " }}" target="_blank" rel="noopener">{{ row.invite.whatsapp }}</a>
-                            {% else %}
-                            <span class="text-muted">—</span>
-                            {% endif %}
+                            <div class="whatsapp-cell d-flex align-items-center gap-2"
+                                data-url="{% url 'rsvp:atualizar_contato_whatsapp' row.invite.pk %}">
+                                <div class="whatsapp-view d-flex align-items-center gap-2">
+                                    <span class="whatsapp-display">
+                                        {% if row.invite.whatsapp %}
+                                        <a href="https://wa.me/55{{ row.invite.whatsapp|cut:"("|cut:")"|cut:"-"|cut:" " }}" target="_blank" rel="noopener">{{ row.invite.whatsapp }}</a>
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-link p-0 btn-editar-contato" title="Editar contato">✏️</button>
+                                </div>
+                                <div class="whatsapp-edit-form input-group input-group-sm d-none">
+                                    <input type="text" class="form-control whatsapp-input"
+                                        value="{{ row.invite.whatsapp }}" placeholder="(81) 91234-5678" maxlength="20">
+                                    <button class="btn btn-success btn-salvar-contato" type="button">Salvar</button>
+                                    <button class="btn btn-outline-secondary btn-cancelar-contato" type="button">Cancelar</button>
+                                </div>
+                            </div>
                         </td>
                         <td class="text-center">
                             <div class="form-check form-switch d-flex justify-content-center">
@@ -133,6 +149,82 @@
             document.querySelectorAll(".linha-convite").forEach(function (row) {
                 const haystack = row.getAttribute("data-search").toLowerCase();
                 row.style.display = haystack.indexOf(term) === -1 ? "none" : "";
+            });
+        });
+
+        document.querySelectorAll(".whatsapp-cell").forEach(function (cell) {
+            const url = cell.getAttribute("data-url");
+            const viewBox = cell.querySelector(".whatsapp-view");
+            const editBox = cell.querySelector(".whatsapp-edit-form");
+            const display = cell.querySelector(".whatsapp-display");
+            const input = cell.querySelector(".whatsapp-input");
+            const btnEditar = cell.querySelector(".btn-editar-contato");
+            const btnSalvar = cell.querySelector(".btn-salvar-contato");
+            const btnCancelar = cell.querySelector(".btn-cancelar-contato");
+
+            function renderDisplay(whatsapp) {
+                if (whatsapp) {
+                    const digits = whatsapp.replace(/\D/g, "");
+                    const link = document.createElement("a");
+                    link.href = "https://wa.me/55" + digits;
+                    link.target = "_blank";
+                    link.rel = "noopener";
+                    link.textContent = whatsapp;
+                    display.replaceChildren(link);
+                } else {
+                    const span = document.createElement("span");
+                    span.className = "text-muted";
+                    span.textContent = "—";
+                    display.replaceChildren(span);
+                }
+            }
+
+            function abrirEdicao() {
+                input.value = display.textContent.trim() === "—" ? "" : display.textContent.trim();
+                viewBox.classList.add("d-none");
+                editBox.classList.remove("d-none");
+                input.focus();
+            }
+
+            function fecharEdicao() {
+                editBox.classList.add("d-none");
+                viewBox.classList.remove("d-none");
+            }
+
+            btnEditar.addEventListener("click", abrirEdicao);
+            btnCancelar.addEventListener("click", fecharEdicao);
+
+            btnSalvar.addEventListener("click", function () {
+                const whatsapp = input.value.trim();
+                btnSalvar.disabled = true;
+                fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": csrfToken,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ whatsapp: whatsapp }),
+                })
+                    .then(function (resp) {
+                        return resp.json().then(function (data) {
+                            if (!resp.ok || !data.ok) throw new Error(data.error || "Falha ao salvar.");
+                            return data;
+                        });
+                    })
+                    .then(function (data) {
+                        renderDisplay(data.whatsapp);
+                        const row = cell.closest(".linha-convite");
+                        if (row) {
+                            row.setAttribute("data-search", row.getAttribute("data-search").replace(/\s*$/, " ") + data.whatsapp);
+                        }
+                        fecharEdicao();
+                    })
+                    .catch(function (err) {
+                        alert(err.message || "Não foi possível salvar. Tente novamente.");
+                    })
+                    .finally(function () {
+                        btnSalvar.disabled = false;
+                    });
             });
         });
 
