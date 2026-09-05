@@ -2,8 +2,9 @@ import json
 
 from django.contrib import admin
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
@@ -51,6 +52,33 @@ def painel_confirmacoes(request):
         "total_confirmed_guests": total_confirmed_guests,
     }
     return render(request, "rsvp/painel_confirmacoes.html", context)
+
+
+@login_required
+def lista_convites(request):
+    invites = Invite.objects.prefetch_related("expected_guests", "guests").order_by("number")
+
+    rows = []
+    for invite in invites:
+        expected = list(invite.expected_guests.all())
+        confirmed = list(invite.guests.all())
+        rows.append({
+            "invite": invite,
+            "first_expected_name": expected[0].name if expected else "",
+            "expected": expected,
+            "confirmed": confirmed,
+        })
+
+    return render(request, "rsvp/lista_convites.html", {"rows": rows})
+
+
+@login_required
+@require_POST
+def alternar_reconfirmado_whatsapp(request, invite_id):
+    invite = get_object_or_404(Invite, pk=invite_id)
+    invite.reconfirmed_by_whatsapp = not invite.reconfirmed_by_whatsapp
+    invite.save(update_fields=["reconfirmed_by_whatsapp", "updated_at"])
+    return JsonResponse({"ok": True, "reconfirmed_by_whatsapp": invite.reconfirmed_by_whatsapp})
 
 
 def _find_invite(number):

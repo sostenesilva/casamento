@@ -21,9 +21,18 @@ class GuestInline(admin.TabularInline):
 
 @admin.register(Invite)
 class InviteAdmin(admin.ModelAdmin):
-    list_display = ("number", "num_passes", "confirmed", "confirmed_at")
-    list_filter = ("confirmed",)
-    search_fields = ("number", "expected_guests__name", "guests__name")
+    list_display = (
+        "number",
+        "num_passes",
+        "whatsapp",
+        "confirmed",
+        "confirmed_at",
+        "reconfirmed_by_whatsapp",
+    )
+    list_display_links = ("number",)
+    list_editable = ("whatsapp", "reconfirmed_by_whatsapp")
+    list_filter = ("confirmed", "reconfirmed_by_whatsapp")
+    search_fields = ("number", "whatsapp", "expected_guests__name", "guests__name")
     inlines = [ExpectedGuestInline, GuestInline]
 
 

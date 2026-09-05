@@ -121,6 +121,12 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Login da página interna de convites (aberta a qualquer usuário autenticado,
+# não só staff — diferente do /admin/, que exige is_staff).
+LOGIN_URL = 'rsvp:login'
+LOGIN_REDIRECT_URL = 'rsvp:lista_convites'
+LOGOUT_REDIRECT_URL = 'rsvp:login'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 

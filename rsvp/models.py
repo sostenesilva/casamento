@@ -4,6 +4,13 @@ from django.db import models
 class Invite(models.Model):
     number = models.CharField("Número do convite", max_length=10, unique=True)
     num_passes = models.PositiveSmallIntegerField("Quantidade de senhas")
+    whatsapp = models.CharField(
+        "Contato (WhatsApp)",
+        max_length=20,
+        blank=True,
+        help_text="Telefone de contato do convite, com DDD. Ex: (81) 91234-5678",
+    )
+    reconfirmed_by_whatsapp = models.BooleanField("Reconfirmado por WhatsApp", default=False)
     confirmed = models.BooleanField("Confirmado", default=False)
     confirmed_at = models.DateTimeField("Confirmado em", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

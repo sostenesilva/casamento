@@ -1,0 +1,167 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convites</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f7f7f5; }
+        .table td, .table th { vertical-align: middle; }
+        .name-list { margin: 0; padding-left: 1.1rem; }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">Convites</span>
+            <form method="post" action="{% url 'rsvp:logout' %}" class="d-flex">
+                {% csrf_token %}
+                <span class="navbar-text text-white-50 me-3">{{ request.user.get_username }}</span>
+                <button class="btn btn-outline-light btn-sm" type="submit">Sair</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="container-fluid pb-5">
+        <div class="row mb-3">
+            <div class="col-md-6 col-lg-4">
+                <input type="text" id="busca" class="form-control" placeholder="Buscar por número, convidado esperado ou confirmado...">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered bg-white align-middle" id="tabela-convites">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Convite</th>
+                        <th>1º convidado esperado</th>
+                        <th>Confirmado em</th>
+                        <th>Contato (WhatsApp)</th>
+                        <th>Reconfirmado por WhatsApp</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr class="linha-convite"
+                        data-search="{{ row.invite.number }} {{ row.invite.whatsapp }} {% for g in row.expected %}{{ g.name }} {% endfor %}{% for g in row.confirmed %}{{ g.name }} {% endfor %}">
+                        <td><strong>{{ row.invite.number }}</strong></td>
+                        <td>{{ row.first_expected_name|default:"—" }}</td>
+                        <td>
+                            {% if row.invite.confirmed_at %}
+                            {{ row.invite.confirmed_at|date:"d/m/Y H:i" }}
+                            {% else %}
+                            <span class="text-muted">Pendente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.invite.whatsapp %}
+                            <a href="https://wa.me/55{{ row.invite.whatsapp|cut:"("|cut:")"|cut:"-"|cut:" " }}" target="_blank" rel="noopener">{{ row.invite.whatsapp }}</a>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="form-check form-switch d-flex justify-content-center">
+                                <input class="form-check-input toggle-reconfirmado" type="checkbox" role="switch"
+                                    data-url="{% url 'rsvp:alternar_reconfirmado_whatsapp' row.invite.pk %}"
+                                    {% if row.invite.reconfirmed_by_whatsapp %}checked{% endif %}>
+                            </div>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal"
+                                data-bs-target="#modal-convite-{{ row.invite.pk }}">
+                                Detalhes
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Nenhum convite cadastrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modais de detalhe (um por convite) -->
+    {% for row in rows %}
+    <div class="modal fade" id="modal-convite-{{ row.invite.pk }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Convite {{ row.invite.number }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2"><strong>Senhas:</strong> {{ row.invite.num_passes }}</p>
+
+                    <h6>Convidados esperados (uso interno)</h6>
+                    {% if row.expected %}
+                    <ol class="name-list mb-3">
+                        {% for g in row.expected %}<li>{{ g.name }}</li>{% endfor %}
+                    </ol>
+                    {% else %}
+                    <p class="text-muted small mb-3">Nenhum cadastrado.</p>
+                    {% endif %}
+
+                    <h6>Convidados confirmados</h6>
+                    {% if row.confirmed %}
+                    <ol class="name-list">
+                        {% for g in row.confirmed %}<li>{{ g.name }}</li>{% endfor %}
+                    </ol>
+                    {% else %}
+                    <p class="text-muted small">Ainda não confirmado.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const csrfToken = "{{ csrf_token }}";
+
+        document.getElementById("busca").addEventListener("input", function (e) {
+            const term = e.target.value.trim().toLowerCase();
+            document.querySelectorAll(".linha-convite").forEach(function (row) {
+                const haystack = row.getAttribute("data-search").toLowerCase();
+                row.style.display = haystack.indexOf(term) === -1 ? "none" : "";
+            });
+        });
+
+        document.querySelectorAll(".toggle-reconfirmado").forEach(function (checkbox) {
+            checkbox.addEventListener("change", function () {
+                const url = checkbox.getAttribute("data-url");
+                const previous = !checkbox.checked;
+                checkbox.disabled = true;
+                fetch(url, {
+                    method: "POST",
+                    headers: { "X-CSRFToken": csrfToken },
+                })
+                    .then(function (resp) {
+                        if (!resp.ok) throw new Error("Falha ao salvar.");
+                        return resp.json();
+                    })
+                    .then(function (data) {
+                        checkbox.checked = data.reconfirmed_by_whatsapp;
+                    })
+                    .catch(function () {
+                        checkbox.checked = previous;
+                        alert("Não foi possível salvar. Tente novamente.");
+                    })
+                    .finally(function () {
+                        checkbox.disabled = false;
+                    });
+            });
+        });
+    </script>
+</body>
+
+</html>
