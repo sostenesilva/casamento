@@ -11,6 +11,7 @@
         body { background-color: #f7f7f5; }
         .table td, .table th { vertical-align: middle; }
         .name-list { margin: 0; padding-left: 1.1rem; }
+        .name-list-sm { margin: 0; padding-left: 1.1rem; font-size: 0.78rem; max-width: 220px; }
         .whatsapp-cell { min-width: 190px; }
         .whatsapp-edit-form { min-width: 220px; }
     </style>
@@ -40,7 +41,8 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Convite</th>
-                        <th>1º convidado esperado</th>
+                        <th>Convidados esperados</th>
+                        <th>Convidados confirmados</th>
                         <th>Confirmado em</th>
                         <th>Contato (WhatsApp)</th>
                         <th>Reconfirmado por WhatsApp</th>
@@ -52,7 +54,24 @@
                     <tr class="linha-convite"
                         data-search="{{ row.invite.number }} {{ row.invite.whatsapp }} {% for g in row.expected %}{{ g.name }} {% endfor %}{% for g in row.confirmed %}{{ g.name }} {% endfor %}">
                         <td><strong>{{ row.invite.number }}</strong></td>
-                        <td>{{ row.first_expected_name|default:"—" }}</td>
+                        <td>
+                            {% if row.expected %}
+                            <ol class="name-list-sm mb-0">
+                                {% for g in row.expected %}<li>{{ g.name }}</li>{% endfor %}
+                            </ol>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.confirmed %}
+                            <ol class="name-list-sm mb-0">
+                                {% for g in row.confirmed %}<li>{{ g.name }}</li>{% endfor %}
+                            </ol>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if row.invite.confirmed_at %}
                             {{ row.invite.confirmed_at|date:"d/m/Y H:i" }}

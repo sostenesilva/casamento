@@ -64,7 +64,6 @@ def lista_convites(request):
         confirmed = list(invite.guests.all())
         rows.append({
             "invite": invite,
-            "first_expected_name": expected[0].name if expected else "",
             "expected": expected,
             "confirmed": confirmed,
         })
