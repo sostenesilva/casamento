@@ -1,9 +1,24 @@
 from django.db import models
+from django.db.models.functions import Length
 
 
 class Invite(models.Model):
+    TIPO_FISICO = "fisico"
+    TIPO_DIGITAL = "digital"
+    TIPO_CHOICES = [
+        (TIPO_FISICO, "Físico"),
+        (TIPO_DIGITAL, "Digital"),
+    ]
+
     number = models.CharField("Número do convite", max_length=10, unique=True)
     num_passes = models.PositiveSmallIntegerField("Quantidade de senhas")
+    invite_type = models.CharField(
+        "Tipo de convite",
+        max_length=10,
+        choices=TIPO_CHOICES,
+        default=TIPO_FISICO,
+    )
+    delivered = models.BooleanField("Convite entregue", default=False)
     whatsapp = models.CharField(
         "Contato (WhatsApp)",
         max_length=20,
@@ -17,7 +32,10 @@ class Invite(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["number"]
+        # Ordenação "natural": primeiro pelo tamanho da string e só depois
+        # alfabeticamente — assim "2" vem antes de "10" (um simples
+        # ordering=["number"] ordena como texto e resultaria em 1, 10, 11, 2, ...).
+        ordering = [Length("number"), "number"]
 
     def __str__(self):
         return f"Convite {self.number} ({self.num_passes} senha(s))"

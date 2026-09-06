@@ -24,4 +24,14 @@ urlpatterns = [
         views.atualizar_contato_whatsapp,
         name="atualizar_contato_whatsapp",
     ),
+    path(
+        "convites/<int:invite_id>/tipo/",
+        views.atualizar_tipo_convite,
+        name="atualizar_tipo_convite",
+    ),
+    path(
+        "convites/<int:invite_id>/entregue/",
+        views.alternar_entregue,
+        name="alternar_entregue",
+    ),
 ]

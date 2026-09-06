@@ -24,14 +24,16 @@ class InviteAdmin(admin.ModelAdmin):
     list_display = (
         "number",
         "num_passes",
+        "invite_type",
+        "delivered",
         "whatsapp",
         "confirmed",
         "confirmed_at",
         "reconfirmed_by_whatsapp",
     )
     list_display_links = ("number",)
-    list_editable = ("whatsapp", "reconfirmed_by_whatsapp")
-    list_filter = ("confirmed", "reconfirmed_by_whatsapp")
+    list_editable = ("invite_type", "delivered", "whatsapp", "reconfirmed_by_whatsapp")
+    list_filter = ("invite_type", "delivered", "confirmed", "reconfirmed_by_whatsapp")
     search_fields = ("number", "whatsapp", "expected_guests__name", "guests__name")
     inlines = [ExpectedGuestInline, GuestInline]
 

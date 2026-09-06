@@ -18,7 +18,7 @@ def index(request):
 
 @staff_member_required
 def painel_confirmacoes(request):
-    invites = Invite.objects.prefetch_related("expected_guests", "guests").order_by("number")
+    invites = Invite.objects.prefetch_related("expected_guests", "guests")
 
     rows = []
     confirmed_invites = 0
@@ -56,7 +56,7 @@ def painel_confirmacoes(request):
 
 @login_required
 def lista_convites(request):
-    invites = Invite.objects.prefetch_related("expected_guests", "guests").order_by("number")
+    invites = Invite.objects.prefetch_related("expected_guests", "guests")
 
     rows = []
     for invite in invites:
@@ -68,7 +68,10 @@ def lista_convites(request):
             "confirmed": confirmed,
         })
 
-    return render(request, "rsvp/lista_convites.html", {"rows": rows})
+    return render(request, "rsvp/lista_convites.html", {
+        "rows": rows,
+        "tipo_choices": Invite.TIPO_CHOICES,
+    })
 
 
 @login_required
@@ -96,6 +99,38 @@ def atualizar_contato_whatsapp(request, invite_id):
     invite.whatsapp = whatsapp
     invite.save(update_fields=["whatsapp", "updated_at"])
     return JsonResponse({"ok": True, "whatsapp": invite.whatsapp})
+
+
+@login_required
+@require_POST
+def atualizar_tipo_convite(request, invite_id):
+    invite = get_object_or_404(Invite, pk=invite_id)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "Requisição inválida."}, status=400)
+
+    invite_type = str(data.get("invite_type", "")).strip()
+    valid_types = dict(Invite.TIPO_CHOICES)
+    if invite_type not in valid_types:
+        return JsonResponse({"ok": False, "error": "Tipo de convite inválido."}, status=400)
+
+    invite.invite_type = invite_type
+    invite.save(update_fields=["invite_type", "updated_at"])
+    return JsonResponse({
+        "ok": True,
+        "invite_type": invite.invite_type,
+        "invite_type_label": valid_types[invite.invite_type],
+    })
+
+
+@login_required
+@require_POST
+def alternar_entregue(request, invite_id):
+    invite = get_object_or_404(Invite, pk=invite_id)
+    invite.delivered = not invite.delivered
+    invite.save(update_fields=["delivered", "updated_at"])
+    return JsonResponse({"ok": True, "delivered": invite.delivered})
 
 
 def _find_invite(number):

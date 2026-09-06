@@ -15,6 +15,20 @@
         .name-list-sm { margin: 0; padding-left: 1.1rem; font-size: 0.78rem; max-width: 220px; }
         .whatsapp-cell { min-width: 190px; }
         .whatsapp-edit-form { min-width: 220px; }
+        .tipo-select {
+            border: 1px solid transparent;
+            border-radius: var(--radius-pill);
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.25em 0.6em;
+            cursor: pointer;
+        }
+        .tipo-select:focus {
+            box-shadow: 0 0 0 0.15rem rgba(127, 143, 108, 0.25);
+            outline: none;
+        }
+        .tipo-select[data-tipo="fisico"] { background-color: rgba(127, 143, 108, 0.18); color: var(--color-green-sage-dark); }
+        .tipo-select[data-tipo="digital"] { background-color: rgba(195, 155, 94, 0.25); color: #7a5a26; }
     </style>
 </head>
 
@@ -61,6 +75,22 @@
                         <option value="sem">Sem contato</option>
                     </select>
                 </div>
+                <div class="col-md-3 col-6">
+                    <label for="filtro-tipo" class="form-label small mb-1">Tipo de convite</label>
+                    <select id="filtro-tipo" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="fisico">Físico</option>
+                        <option value="digital">Digital</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-6">
+                    <label for="filtro-entregue" class="form-label small mb-1">Convite entregue</label>
+                    <select id="filtro-entregue" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="sim">Sim</option>
+                        <option value="nao">Não</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -69,6 +99,8 @@
                 <thead>
                     <tr>
                         <th class="sortable" data-sort-key="number">Convite <span class="sort-arrow"></span></th>
+                        <th class="sortable" data-sort-key="tipo">Tipo <span class="sort-arrow"></span></th>
+                        <th class="sortable" data-sort-key="entregue">Entregue <span class="sort-arrow"></span></th>
                         <th class="sortable" data-sort-key="expected">Convidados esperados <span class="sort-arrow"></span></th>
                         <th class="sortable" data-sort-key="confirmed">Convidados confirmados <span class="sort-arrow"></span></th>
                         <th class="sortable" data-sort-key="confirmed-at">Confirmado em <span class="sort-arrow"></span></th>
@@ -83,6 +115,9 @@
                         data-search="{{ row.invite.number }} {{ row.invite.whatsapp }} {% for g in row.expected %}{{ g.name }} {% endfor %}{% for g in row.confirmed %}{{ g.name }} {% endfor %}"
                         data-status="{% if row.invite.confirmed %}confirmado{% else %}pendente{% endif %}"
                         data-tem-contato="{% if row.invite.whatsapp %}com{% else %}sem{% endif %}"
+                        data-tipo="{{ row.invite.invite_type }}"
+                        data-sort-tipo="{{ row.invite.get_invite_type_display }}"
+                        data-sort-entregue="{% if row.invite.delivered %}sim{% else %}nao{% endif %}"
                         data-sort-number="{{ row.invite.number }}"
                         data-sort-expected="{{ row.expected|length }}"
                         data-sort-confirmed="{{ row.confirmed|length }}"
@@ -90,6 +125,21 @@
                         data-sort-contato="{{ row.invite.whatsapp }}"
                         data-sort-reconfirmado="{% if row.invite.reconfirmed_by_whatsapp %}sim{% else %}nao{% endif %}">
                         <td><strong>{{ row.invite.number }}</strong></td>
+                        <td>
+                            <select class="tipo-select" data-tipo="{{ row.invite.invite_type }}"
+                                data-url="{% url 'rsvp:atualizar_tipo_convite' row.invite.pk %}">
+                                {% for value, label in tipo_choices %}
+                                <option value="{{ value }}" {% if row.invite.invite_type == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td class="text-center">
+                            <div class="form-check form-switch d-flex justify-content-center">
+                                <input class="form-check-input toggle-entregue" type="checkbox" role="switch"
+                                    data-url="{% url 'rsvp:alternar_entregue' row.invite.pk %}"
+                                    {% if row.invite.delivered %}checked{% endif %}>
+                            </div>
+                        </td>
                         <td>
                             {% if row.expected %}
                             <ol class="name-list-sm mb-0">
@@ -152,7 +202,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">Nenhum convite cadastrado.</td>
+                        <td colspan="9" class="text-center text-muted py-4">Nenhum convite cadastrado.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -204,23 +254,29 @@
         const filtroStatus = document.getElementById("filtro-status");
         const filtroReconfirmado = document.getElementById("filtro-reconfirmado");
         const filtroContato = document.getElementById("filtro-contato");
+        const filtroTipo = document.getElementById("filtro-tipo");
+        const filtroEntregue = document.getElementById("filtro-entregue");
 
         function aplicarFiltros() {
             const termo = campoBusca.value.trim().toLowerCase();
             const status = filtroStatus.value;
             const reconfirmado = filtroReconfirmado.value;
             const contato = filtroContato.value;
+            const tipo = filtroTipo.value;
+            const entregue = filtroEntregue.value;
 
             document.querySelectorAll(".linha-convite").forEach(function (row) {
                 const bateBusca = !termo || row.getAttribute("data-search").toLowerCase().indexOf(termo) !== -1;
                 const bateStatus = !status || row.getAttribute("data-status") === status;
                 const bateReconfirmado = !reconfirmado || row.getAttribute("data-sort-reconfirmado") === reconfirmado;
                 const bateContato = !contato || row.getAttribute("data-tem-contato") === contato;
-                row.style.display = (bateBusca && bateStatus && bateReconfirmado && bateContato) ? "" : "none";
+                const bateTipo = !tipo || row.getAttribute("data-tipo") === tipo;
+                const bateEntregue = !entregue || row.getAttribute("data-sort-entregue") === entregue;
+                row.style.display = (bateBusca && bateStatus && bateReconfirmado && bateContato && bateTipo && bateEntregue) ? "" : "none";
             });
         }
 
-        [campoBusca, filtroStatus, filtroReconfirmado, filtroContato].forEach(function (el) {
+        [campoBusca, filtroStatus, filtroReconfirmado, filtroContato, filtroTipo, filtroEntregue].forEach(function (el) {
             el.addEventListener("input", aplicarFiltros);
             el.addEventListener("change", aplicarFiltros);
         });
@@ -338,33 +394,78 @@
             });
         });
 
-        document.querySelectorAll(".toggle-reconfirmado").forEach(function (checkbox) {
-            checkbox.addEventListener("change", function () {
-                const url = checkbox.getAttribute("data-url");
-                const previous = !checkbox.checked;
-                checkbox.disabled = true;
+        // --- Toggles booleanos (switch salvo via AJAX ao clicar) ---
+        function configurarToggle(seletor, campoResposta, atributoOrdenacao) {
+            document.querySelectorAll(seletor).forEach(function (checkbox) {
+                checkbox.addEventListener("change", function () {
+                    const url = checkbox.getAttribute("data-url");
+                    const previous = !checkbox.checked;
+                    checkbox.disabled = true;
+                    fetch(url, {
+                        method: "POST",
+                        headers: { "X-CSRFToken": csrfToken },
+                    })
+                        .then(function (resp) {
+                            if (!resp.ok) throw new Error("Falha ao salvar.");
+                            return resp.json();
+                        })
+                        .then(function (data) {
+                            checkbox.checked = data[campoResposta];
+                            const row = checkbox.closest(".linha-convite");
+                            if (row && atributoOrdenacao) {
+                                row.setAttribute(atributoOrdenacao, data[campoResposta] ? "sim" : "nao");
+                            }
+                            aplicarFiltros();
+                        })
+                        .catch(function () {
+                            checkbox.checked = previous;
+                            alert("Não foi possível salvar. Tente novamente.");
+                        })
+                        .finally(function () {
+                            checkbox.disabled = false;
+                        });
+                });
+            });
+        }
+
+        configurarToggle(".toggle-reconfirmado", "reconfirmed_by_whatsapp", "data-sort-reconfirmado");
+        configurarToggle(".toggle-entregue", "delivered", "data-sort-entregue");
+
+        // --- Tipo de convite (select estilizado como badge) ---
+        document.querySelectorAll(".tipo-select").forEach(function (select) {
+            select.addEventListener("change", function () {
+                const url = select.getAttribute("data-url");
+                const anterior = select.getAttribute("data-tipo");
+                select.disabled = true;
                 fetch(url, {
                     method: "POST",
-                    headers: { "X-CSRFToken": csrfToken },
+                    headers: {
+                        "X-CSRFToken": csrfToken,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ invite_type: select.value }),
                 })
                     .then(function (resp) {
-                        if (!resp.ok) throw new Error("Falha ao salvar.");
-                        return resp.json();
+                        return resp.json().then(function (data) {
+                            if (!resp.ok || !data.ok) throw new Error(data.error || "Falha ao salvar.");
+                            return data;
+                        });
                     })
                     .then(function (data) {
-                        checkbox.checked = data.reconfirmed_by_whatsapp;
-                        const row = checkbox.closest(".linha-convite");
+                        select.setAttribute("data-tipo", data.invite_type);
+                        const row = select.closest(".linha-convite");
                         if (row) {
-                            row.setAttribute("data-sort-reconfirmado", data.reconfirmed_by_whatsapp ? "sim" : "nao");
+                            row.setAttribute("data-tipo", data.invite_type);
+                            row.setAttribute("data-sort-tipo", data.invite_type_label);
                         }
                         aplicarFiltros();
                     })
-                    .catch(function () {
-                        checkbox.checked = previous;
-                        alert("Não foi possível salvar. Tente novamente.");
+                    .catch(function (err) {
+                        select.value = anterior;
+                        alert(err.message || "Não foi possível salvar. Tente novamente.");
                     })
                     .finally(function () {
-                        checkbox.disabled = false;
+                        select.disabled = false;
                     });
             });
         });
