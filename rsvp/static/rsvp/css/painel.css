@@ -1,0 +1,212 @@
+/*
+ * Tema das páginas internas (login e lista de convites), reaproveitando a
+ * paleta de cores do site principal (ver rsvp/static/rsvp/css/style.css),
+ * mas com uma tipografia mais neutra e componentes mais compactos —
+ * apropriado pra uma tela operacional com bastante dado em tabela.
+ */
+
+:root {
+    --color-cream: #f3ede2;
+    --color-cream-soft: #faf7f0;
+    --color-green-dark: #2c3419;
+    --color-green-sage: #7f8f6c;
+    --color-green-sage-dark: #66765a;
+    --color-gold: #c39b5e;
+    --color-text: #3a3a30;
+
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 9px;
+    --radius-pill: 999px;
+
+    --bs-primary: var(--color-green-sage-dark);
+    --bs-primary-rgb: 102, 118, 90;
+    --bs-link-color: var(--color-green-sage-dark);
+    --bs-link-hover-color: var(--color-green-dark);
+    --bs-border-radius: var(--radius-md);
+    --bs-border-radius-sm: var(--radius-sm);
+    --bs-border-radius-lg: var(--radius-lg);
+    --bs-body-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+body {
+    background-color: var(--color-cream);
+    color: var(--color-text);
+    font-family: var(--bs-body-font-family);
+}
+
+.brand-serif {
+    font-family: 'Marcellus', 'Cormorant Garamond', serif;
+    letter-spacing: 0.02em;
+}
+
+/* --- Estrutura --- */
+
+.navbar-portal {
+    background-color: var(--color-green-dark) !important;
+}
+
+.surface-card {
+    background: var(--color-cream-soft);
+    border: 1px solid rgba(127, 143, 108, 0.35);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 3px rgba(44, 52, 25, 0.06);
+}
+
+/* --- Botões --- */
+
+.btn {
+    border-radius: var(--radius-sm);
+}
+
+.btn-theme {
+    background-color: var(--color-green-sage-dark);
+    border-color: var(--color-green-sage-dark);
+    color: #fff;
+}
+
+.btn-theme:hover,
+.btn-theme:focus {
+    background-color: var(--color-green-dark);
+    border-color: var(--color-green-dark);
+    color: #fff;
+}
+
+.btn-outline-theme {
+    border-color: var(--color-green-sage-dark);
+    color: var(--color-green-sage-dark);
+    background: transparent;
+}
+
+.btn-outline-theme:hover,
+.btn-outline-theme:focus {
+    background-color: var(--color-green-sage-dark);
+    border-color: var(--color-green-sage-dark);
+    color: #fff;
+}
+
+.btn-link-theme {
+    color: var(--color-green-sage-dark);
+    text-decoration: none;
+}
+
+.btn-link-theme:hover {
+    color: var(--color-green-dark);
+}
+
+/* --- Formulários --- */
+
+.form-control,
+.form-select {
+    border-color: rgba(127, 143, 108, 0.45);
+    border-radius: var(--radius-sm);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--color-green-sage-dark);
+    box-shadow: 0 0 0 0.2rem rgba(127, 143, 108, 0.2);
+}
+
+.form-label {
+    color: var(--color-green-sage-dark);
+    font-weight: 500;
+}
+
+.form-check-input:checked {
+    background-color: var(--color-green-sage-dark);
+    border-color: var(--color-green-sage-dark);
+}
+
+.form-check-input:focus {
+    border-color: var(--color-green-sage-dark);
+    box-shadow: 0 0 0 0.2rem rgba(127, 143, 108, 0.2);
+}
+
+/* --- Tabela --- */
+
+.table-portal {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-portal thead th {
+    background: var(--color-cream-soft);
+    color: var(--color-green-dark);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(127, 143, 108, 0.35) !important;
+}
+
+.table-portal tbody tr {
+    background: #fff;
+}
+
+.table-portal tbody tr:nth-of-type(even) {
+    background: rgba(243, 237, 226, 0.45);
+}
+
+.table-portal tbody tr:hover {
+    background: rgba(127, 143, 108, 0.09);
+}
+
+.table-portal td,
+.table-portal th {
+    border-color: rgba(127, 143, 108, 0.18) !important;
+    vertical-align: middle;
+}
+
+th.sortable {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+}
+
+th.sortable:hover {
+    background: rgba(195, 155, 94, 0.15) !important;
+}
+
+th.sortable .sort-arrow {
+    display: inline-block;
+    width: 1em;
+    color: var(--color-gold);
+}
+
+/* --- Badges de status --- */
+
+.badge-pill-theme {
+    display: inline-block;
+    padding: 0.32em 0.75em;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.badge-ok {
+    background: rgba(127, 143, 108, 0.18);
+    color: var(--color-green-sage-dark);
+}
+
+.badge-pending {
+    background: rgba(58, 58, 48, 0.08);
+    color: var(--color-text);
+}
+
+/* --- Modal --- */
+
+.modal-content {
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(127, 143, 108, 0.3);
+}
+
+.modal-header,
+.modal-footer {
+    border-color: rgba(127, 143, 108, 0.2);
+}
+
+.modal-title {
+    color: var(--color-green-dark);
+}
