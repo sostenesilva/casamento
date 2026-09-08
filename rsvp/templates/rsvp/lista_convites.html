@@ -45,6 +45,29 @@
     </nav>
 
     <div class="container-fluid pb-5">
+        <div class="stats-row">
+            <div class="stat-card">
+                <span class="stat-label">Convites</span>
+                <span class="stat-value" id="stat-total">{{ total_invites }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Confirmados</span>
+                <span class="stat-value" id="stat-confirmados">{{ confirmed_invites }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Pendentes</span>
+                <span class="stat-value" id="stat-pendentes">{{ pending_invites }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Convidados esperados</span>
+                <span class="stat-value" id="stat-esperados">{{ total_expected_guests }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Convidados confirmados</span>
+                <span class="stat-value" id="stat-confirmados-convidados">{{ total_confirmed_guests }}</span>
+            </div>
+        </div>
+
         <div class="surface-card p-3 mb-3">
             <div class="row g-2 align-items-end">
                 <div class="col-md-4">
@@ -257,6 +280,31 @@
         const filtroTipo = document.getElementById("filtro-tipo");
         const filtroEntregue = document.getElementById("filtro-entregue");
 
+        // --- Cards de totais no topo, recalculados a cada filtro/busca ---
+        const statTotal = document.getElementById("stat-total");
+        const statConfirmados = document.getElementById("stat-confirmados");
+        const statPendentes = document.getElementById("stat-pendentes");
+        const statEsperados = document.getElementById("stat-esperados");
+        const statConfirmadosConvidados = document.getElementById("stat-confirmados-convidados");
+
+        function atualizarEstatisticas(linhasVisiveis) {
+            let confirmados = 0;
+            let esperados = 0;
+            let confirmadosConvidados = 0;
+
+            linhasVisiveis.forEach(function (row) {
+                if (row.getAttribute("data-status") === "confirmado") confirmados++;
+                esperados += parseInt(row.getAttribute("data-sort-expected"), 10) || 0;
+                confirmadosConvidados += parseInt(row.getAttribute("data-sort-confirmed"), 10) || 0;
+            });
+
+            statTotal.textContent = linhasVisiveis.length;
+            statConfirmados.textContent = confirmados;
+            statPendentes.textContent = linhasVisiveis.length - confirmados;
+            statEsperados.textContent = esperados;
+            statConfirmadosConvidados.textContent = confirmadosConvidados;
+        }
+
         function aplicarFiltros() {
             const termo = campoBusca.value.trim().toLowerCase();
             const status = filtroStatus.value;
@@ -264,6 +312,7 @@
             const contato = filtroContato.value;
             const tipo = filtroTipo.value;
             const entregue = filtroEntregue.value;
+            const linhasVisiveis = [];
 
             document.querySelectorAll(".linha-convite").forEach(function (row) {
                 const bateBusca = !termo || row.getAttribute("data-search").toLowerCase().indexOf(termo) !== -1;
@@ -272,8 +321,12 @@
                 const bateContato = !contato || row.getAttribute("data-tem-contato") === contato;
                 const bateTipo = !tipo || row.getAttribute("data-tipo") === tipo;
                 const bateEntregue = !entregue || row.getAttribute("data-sort-entregue") === entregue;
-                row.style.display = (bateBusca && bateStatus && bateReconfirmado && bateContato && bateTipo && bateEntregue) ? "" : "none";
+                const bate = bateBusca && bateStatus && bateReconfirmado && bateContato && bateTipo && bateEntregue;
+                row.style.display = bate ? "" : "none";
+                if (bate) linhasVisiveis.push(row);
             });
+
+            atualizarEstatisticas(linhasVisiveis);
         }
 
         [campoBusca, filtroStatus, filtroReconfirmado, filtroContato, filtroTipo, filtroEntregue].forEach(function (el) {

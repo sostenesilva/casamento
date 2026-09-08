@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
-from .models import ExpectedGuest, Guest, Invite
+from .models import Guest, Invite
 
 
 @require_GET
@@ -16,12 +16,14 @@ def index(request):
     return render(request, "rsvp/index.html")
 
 
-@staff_member_required
-def painel_confirmacoes(request):
-    invites = Invite.objects.prefetch_related("expected_guests", "guests")
-
+def _build_invite_rows(invites):
+    """Monta as linhas (convite + esperados + confirmados) e os totais
+    agregados, reaproveitado pelo painel de confirmações e pela lista de
+    convites — ambos mostram os mesmos números, só que em telas diferentes.
+    """
     rows = []
     confirmed_invites = 0
+    total_expected_guests = 0
     total_confirmed_guests = 0
 
     for invite in invites:
@@ -37,19 +39,31 @@ def painel_confirmacoes(request):
 
         if invite.confirmed:
             confirmed_invites += 1
+        total_expected_guests += len(expected)
         total_confirmed_guests += len(confirmed)
 
         rows.append({"invite": invite, "expected": expected, "confirmed": confirmed})
+
+    stats = {
+        "total_invites": len(rows),
+        "confirmed_invites": confirmed_invites,
+        "pending_invites": len(rows) - confirmed_invites,
+        "total_expected_guests": total_expected_guests,
+        "total_confirmed_guests": total_confirmed_guests,
+    }
+    return rows, stats
+
+
+@staff_member_required
+def painel_confirmacoes(request):
+    invites = Invite.objects.prefetch_related("expected_guests", "guests")
+    rows, stats = _build_invite_rows(invites)
 
     context = {
         **admin.site.each_context(request),
         "title": "Painel de confirmações",
         "rows": rows,
-        "total_invites": invites.count(),
-        "confirmed_invites": confirmed_invites,
-        "pending_invites": invites.count() - confirmed_invites,
-        "total_expected_guests": ExpectedGuest.objects.count(),
-        "total_confirmed_guests": total_confirmed_guests,
+        **stats,
     }
     return render(request, "rsvp/painel_confirmacoes.html", context)
 
@@ -57,20 +71,12 @@ def painel_confirmacoes(request):
 @login_required
 def lista_convites(request):
     invites = Invite.objects.prefetch_related("expected_guests", "guests")
-
-    rows = []
-    for invite in invites:
-        expected = list(invite.expected_guests.all())
-        confirmed = list(invite.guests.all())
-        rows.append({
-            "invite": invite,
-            "expected": expected,
-            "confirmed": confirmed,
-        })
+    rows, stats = _build_invite_rows(invites)
 
     return render(request, "rsvp/lista_convites.html", {
         "rows": rows,
         "tipo_choices": Invite.TIPO_CHOICES,
+        **stats,
     })
 
 

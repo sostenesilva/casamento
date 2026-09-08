@@ -53,6 +53,37 @@ body {
     box-shadow: 0 1px 3px rgba(44, 52, 25, 0.06);
 }
 
+/* --- Cards de estatística (totais, atualizados junto com os filtros) --- */
+
+.stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.stat-card {
+    flex: 1 1 150px;
+    background: var(--color-cream-soft);
+    border: 1px solid rgba(127, 143, 108, 0.3);
+    border-radius: var(--radius-md);
+    padding: 0.6rem 1rem;
+}
+
+.stat-card .stat-label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-green-sage-dark);
+}
+
+.stat-card .stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-green-dark);
+}
+
 /* --- Botões --- */
 
 .btn {
