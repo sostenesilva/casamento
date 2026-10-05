@@ -36,11 +36,25 @@
     <nav class="navbar navbar-dark navbar-portal mb-4">
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1 brand-serif">Convites</span>
-            <form method="post" action="{% url 'rsvp:logout' %}" class="d-flex align-items-center">
-                {% csrf_token %}
-                <span class="navbar-text text-white-50 me-3">{{ request.user.get_username }}</span>
-                <button class="btn btn-outline-light btn-sm" type="submit">Sair</button>
-            </form>
+            <div class="d-flex align-items-center gap-3">
+                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        Exportar
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'rsvp:exportar_confirmados' %}">Convidados confirmados (CSV)</a></li>
+                        <li><a class="dropdown-item" href="{% url 'rsvp:exportar_esperados' %}">Convidados esperados (CSV)</a></li>
+                        <li><a class="dropdown-item" href="{% url 'rsvp:exportar_relatorio' %}">Relatório completo (CSV)</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'rsvp:modelo_checkin' %}" target="_blank">Modelo de check-in (imprimir)</a></li>
+                    </ul>
+                </div>
+                <form method="post" action="{% url 'rsvp:logout' %}" class="d-flex align-items-center">
+                    {% csrf_token %}
+                    <span class="navbar-text text-white-50 me-3">{{ request.user.get_username }}</span>
+                    <button class="btn btn-outline-light btn-sm" type="submit">Sair</button>
+                </form>
+            </div>
         </div>
     </nav>
 
@@ -134,7 +148,7 @@
                 </thead>
                 <tbody>
                     {% for row in rows %}
-                    <tr class="linha-convite"
+                    <tr class="linha-convite" data-pk="{{ row.invite.pk }}"
                         data-search="{{ row.invite.number }} {{ row.invite.whatsapp }} {% for g in row.expected %}{{ g.name }} {% endfor %}{% for g in row.confirmed %}{{ g.name }} {% endfor %}"
                         data-status="{% if row.invite.confirmed %}confirmado{% else %}pendente{% endif %}"
                         data-tem-contato="{% if row.invite.whatsapp %}com{% else %}sem{% endif %}"
@@ -173,15 +187,19 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if row.confirmed %}
-                            <ol class="name-list-sm mb-0">
-                                {% for g in row.confirmed %}<li>{{ g.name }}</li>{% endfor %}
-                            </ol>
-                            {% else %}
-                            <span class="text-muted">—</span>
-                            {% endif %}
+                            <div id="confirmados-lista-{{ row.invite.pk }}">
+                                {% if row.confirmed %}
+                                <ol class="name-list-sm mb-0">
+                                    {% for g in row.confirmed %}<li>{{ g.name }}</li>{% endfor %}
+                                </ol>
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </div>
+                            <button type="button" class="btn btn-sm btn-link p-0 mt-1 btn-link-theme" data-bs-toggle="modal"
+                                data-bs-target="#modal-confirmar-{{ row.invite.pk }}">✏️ confirmar/editar</button>
                         </td>
-                        <td>
+                        <td id="confirmado-em-{{ row.invite.pk }}">
                             {% if row.invite.confirmed_at %}
                             <span class="badge-pill-theme badge-ok">{{ row.invite.confirmed_at|date:"d/m/Y H:i" }}</span>
                             {% else %}
@@ -255,13 +273,48 @@
                     {% endif %}
 
                     <h6>Convidados confirmados</h6>
-                    {% if row.confirmed %}
-                    <ol class="name-list">
-                        {% for g in row.confirmed %}<li>{{ g.name }}</li>{% endfor %}
-                    </ol>
-                    {% else %}
-                    <p class="text-muted small">Ainda não confirmado.</p>
-                    {% endif %}
+                    <div id="detalhes-confirmados-{{ row.invite.pk }}">
+                        {% if row.confirmed %}
+                        <ol class="name-list">
+                            {% for g in row.confirmed %}<li>{{ g.name }}</li>{% endfor %}
+                        </ol>
+                        {% else %}
+                        <p class="text-muted small">Ainda não confirmado.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: confirmar/editar presença (mesmo fluxo da página inicial) -->
+    <div class="modal fade" id="modal-confirmar-{{ row.invite.pk }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar presença — Convite {{ row.invite.number }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-1">Este convite foi direcionado a <strong>{{ row.invite.num_passes }}</strong> pessoa{{ row.invite.num_passes|pluralize }}.</p>
+                    <p id="confirmado-hint-{{ row.invite.pk }}" class="text-muted small mb-3 {% if not row.invite.confirmed %}d-none{% endif %}">
+                        Presença já confirmada em {{ row.invite.confirmed_at|date:"d/m/Y H:i" }}. Atualize os nomes abaixo se precisar.
+                    </p>
+                    <div class="confirmar-alert alert alert-danger py-2 d-none" role="alert"></div>
+
+                    {% for slot in row.slots %}
+                    <div class="mb-2">
+                        <label class="form-label small mb-1">Convidado {{ slot.slot }}</label>
+                        <input type="text" class="form-control confirmar-nome" maxlength="150"
+                            value="{{ slot.confirmed_name }}"
+                            placeholder="{{ slot.expected_name|default:'Nome completo' }}">
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-theme" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-theme btn-salvar-confirmacao"
+                        data-pk="{{ row.invite.pk }}" data-number="{{ row.invite.number }}">Salvar confirmação</button>
                 </div>
             </div>
         </div>
@@ -519,6 +572,131 @@
                     })
                     .finally(function () {
                         select.disabled = false;
+                    });
+            });
+        });
+
+        // --- Confirmar/editar presença pelo modal (mesmo endpoint da página inicial) ---
+        function montarListaNomes(nomes) {
+            const preenchidos = nomes.filter(function (n) { return n; });
+            if (!preenchidos.length) {
+                const span = document.createElement("span");
+                span.className = "text-muted";
+                span.textContent = "—";
+                return span;
+            }
+            const ol = document.createElement("ol");
+            ol.className = "name-list-sm mb-0";
+            preenchidos.forEach(function (nome) {
+                const li = document.createElement("li");
+                li.textContent = nome;
+                ol.appendChild(li);
+            });
+            return ol;
+        }
+
+        function atualizarAposConfirmacao(pk, invite) {
+            const listaEl = document.getElementById("confirmados-lista-" + pk);
+            if (listaEl) listaEl.replaceChildren(montarListaNomes(invite.names));
+
+            const badgeEl = document.getElementById("confirmado-em-" + pk);
+            if (badgeEl) {
+                const span = document.createElement("span");
+                if (invite.confirmed_at) {
+                    span.className = "badge-pill-theme badge-ok";
+                    span.textContent = invite.confirmed_at;
+                } else {
+                    span.className = "badge-pill-theme badge-pending";
+                    span.textContent = "Pendente";
+                }
+                badgeEl.replaceChildren(span);
+            }
+
+            const detalhesEl = document.getElementById("detalhes-confirmados-" + pk);
+            if (detalhesEl) {
+                const preenchidos = invite.names.filter(function (n) { return n; });
+                if (preenchidos.length) {
+                    const ol = document.createElement("ol");
+                    ol.className = "name-list";
+                    preenchidos.forEach(function (nome) {
+                        const li = document.createElement("li");
+                        li.textContent = nome;
+                        ol.appendChild(li);
+                    });
+                    detalhesEl.replaceChildren(ol);
+                } else {
+                    const p = document.createElement("p");
+                    p.className = "text-muted small";
+                    p.textContent = "Ainda não confirmado.";
+                    detalhesEl.replaceChildren(p);
+                }
+            }
+
+            const confirmModal = document.getElementById("modal-confirmar-" + pk);
+            if (confirmModal) {
+                const inputs = confirmModal.querySelectorAll(".confirmar-nome");
+                inputs.forEach(function (input, i) { input.value = invite.names[i] || ""; });
+                const hint = document.getElementById("confirmado-hint-" + pk);
+                if (hint && invite.confirmed_at) {
+                    hint.textContent = "Presença já confirmada em " + invite.confirmed_at + ". Atualize os nomes abaixo se precisar.";
+                    hint.classList.remove("d-none");
+                }
+            }
+
+            const row = document.querySelector('.linha-convite[data-pk="' + pk + '"]');
+            if (row) {
+                const quantidade = invite.names.filter(function (n) { return n; }).length;
+                row.setAttribute("data-status", invite.confirmed ? "confirmado" : "pendente");
+                row.setAttribute("data-sort-confirmed", quantidade);
+                row.setAttribute("data-sort-confirmed-at", invite.confirmed_at_iso || "");
+                row.setAttribute("data-search", row.getAttribute("data-search") + " " + invite.names.join(" "));
+            }
+
+            aplicarFiltros();
+        }
+
+        document.querySelectorAll(".btn-salvar-confirmacao").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                const pk = btn.getAttribute("data-pk");
+                const number = btn.getAttribute("data-number");
+                const modal = btn.closest(".modal");
+                const alertBox = modal.querySelector(".confirmar-alert");
+                const nomes = Array.from(modal.querySelectorAll(".confirmar-nome")).map(function (input) {
+                    return input.value.trim();
+                });
+
+                alertBox.classList.add("d-none");
+                btn.disabled = true;
+                const textoOriginal = btn.textContent;
+                btn.textContent = "Salvando...";
+
+                fetch("{% url 'rsvp:confirmar_presenca' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": csrfToken,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ number: number, names: nomes }),
+                })
+                    .then(function (resp) {
+                        return resp.json().then(function (data) { return { status: resp.status, data: data }; });
+                    })
+                    .then(function (result) {
+                        if (!result.data.ok) {
+                            alertBox.textContent = result.data.error || "Não foi possível salvar.";
+                            alertBox.classList.remove("d-none");
+                            return;
+                        }
+                        atualizarAposConfirmacao(pk, result.data.invite);
+                        bootstrap.Modal.getOrCreateInstance(modal).hide();
+                    })
+                    .catch(function () {
+                        alertBox.textContent = "Não foi possível conectar. Tente novamente.";
+                        alertBox.classList.remove("d-none");
+                    })
+                    .finally(function () {
+                        btn.disabled = false;
+                        btn.textContent = textoOriginal;
                     });
             });
         });

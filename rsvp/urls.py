@@ -34,4 +34,8 @@ urlpatterns = [
         views.alternar_entregue,
         name="alternar_entregue",
     ),
+    path("convites/exportar/confirmados/", views.exportar_confirmados, name="exportar_confirmados"),
+    path("convites/exportar/esperados/", views.exportar_esperados, name="exportar_esperados"),
+    path("convites/exportar/relatorio/", views.exportar_relatorio, name="exportar_relatorio"),
+    path("convites/checkin/", views.modelo_checkin, name="modelo_checkin"),
 ]

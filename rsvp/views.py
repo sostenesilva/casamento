@@ -1,9 +1,10 @@
+import csv
 import json
 
 from django.contrib import admin
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
@@ -42,7 +43,18 @@ def _build_invite_rows(invites):
         total_expected_guests += len(expected)
         total_confirmed_guests += len(confirmed)
 
-        rows.append({"invite": invite, "expected": expected, "confirmed": confirmed})
+        expected_by_slot = {g.slot: g.name for g in expected}
+        confirmed_by_slot = {g.slot: g.name for g in confirmed}
+        slots = [
+            {
+                "slot": slot,
+                "expected_name": expected_by_slot.get(slot, ""),
+                "confirmed_name": confirmed_by_slot.get(slot, ""),
+            }
+            for slot in range(1, invite.num_passes + 1)
+        ]
+
+        rows.append({"invite": invite, "expected": expected, "confirmed": confirmed, "slots": slots})
 
     stats = {
         "total_invites": len(rows),
@@ -139,6 +151,89 @@ def alternar_entregue(request, invite_id):
     return JsonResponse({"ok": True, "delivered": invite.delivered})
 
 
+def _csv_response(filename, header, data_rows):
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    # BOM no início para o Excel reconhecer UTF-8 e exibir acentos corretamente.
+    response.write("﻿")
+    writer = csv.writer(response, delimiter=";")
+    writer.writerow(header)
+    writer.writerows(data_rows)
+    return response
+
+
+@login_required
+def exportar_confirmados(request):
+    invites = Invite.objects.prefetch_related("expected_guests", "guests")
+    rows, _ = _build_invite_rows(invites)
+
+    data_rows = []
+    for row in rows:
+        invite = row["invite"]
+        confirmado_em = invite.confirmed_at.strftime("%d/%m/%Y %H:%M") if invite.confirmed_at else ""
+        for guest in row["confirmed"]:
+            data_rows.append((invite.number, guest.slot, guest.name, confirmado_em))
+
+    return _csv_response(
+        "convidados_confirmados.csv",
+        ["Convite", "Senha", "Nome", "Confirmado em"],
+        data_rows,
+    )
+
+
+@login_required
+def exportar_esperados(request):
+    invites = Invite.objects.prefetch_related("expected_guests", "guests")
+    rows, _ = _build_invite_rows(invites)
+
+    data_rows = []
+    for row in rows:
+        for guest in row["expected"]:
+            data_rows.append((row["invite"].number, guest.slot, guest.name))
+
+    return _csv_response(
+        "convidados_esperados.csv",
+        ["Convite", "Senha", "Nome esperado"],
+        data_rows,
+    )
+
+
+@login_required
+def exportar_relatorio(request):
+    invites = Invite.objects.prefetch_related("expected_guests", "guests")
+    rows, _ = _build_invite_rows(invites)
+
+    data_rows = []
+    for row in rows:
+        invite = row["invite"]
+        data_rows.append((
+            invite.number,
+            invite.get_invite_type_display(),
+            "Sim" if invite.delivered else "Não",
+            invite.num_passes,
+            "; ".join(g.name for g in row["expected"]),
+            "; ".join(g.name for g in row["confirmed"]),
+            "Confirmado" if invite.confirmed else "Pendente",
+            invite.confirmed_at.strftime("%d/%m/%Y %H:%M") if invite.confirmed_at else "",
+            invite.whatsapp,
+            "Sim" if invite.reconfirmed_by_whatsapp else "Não",
+        ))
+
+    header = [
+        "Convite", "Tipo", "Entregue", "Senhas", "Convidados esperados",
+        "Convidados confirmados", "Status", "Confirmado em", "Contato (WhatsApp)",
+        "Reconfirmado por WhatsApp",
+    ]
+    return _csv_response("relatorio_confirmacao.csv", header, data_rows)
+
+
+@login_required
+def modelo_checkin(request):
+    invites = Invite.objects.prefetch_related("expected_guests", "guests")
+    rows, stats = _build_invite_rows(invites)
+    return render(request, "rsvp/modelo_checkin.html", {"rows": rows, **stats})
+
+
 def _find_invite(number):
     try:
         return Invite.objects.get(number__iexact=number)
@@ -164,6 +259,7 @@ def _invite_payload(invite):
         "num_passes": invite.num_passes,
         "confirmed": invite.confirmed,
         "confirmed_at": invite.confirmed_at.strftime("%d/%m/%Y às %H:%M") if invite.confirmed_at else None,
+        "confirmed_at_iso": invite.confirmed_at.isoformat() if invite.confirmed_at else None,
         "names": names,
     }
 

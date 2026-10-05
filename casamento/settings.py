@@ -10,18 +10,38 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Carrega variáveis de um .env local, se existir (sem depender de nenhuma
+# biblioteca externa). Em produção, use variáveis de ambiente de verdade —
+# elas têm prioridade e o .env é só uma conveniência para rodar localmente.
+_env_file = BASE_DIR / ".env"
+if _env_file.exists():
+    for _line in _env_file.read_text().splitlines():
+        _line = _line.strip()
+        if not _line or _line.startswith("#") or "=" not in _line:
+            continue
+        _key, _, _value = _line.partition("=")
+        os.environ.setdefault(_key.strip(), _value.strip())
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Mude para False antes de subir para produção.
-DEBUG = True
+# Padrão seguro: False. Para ligar em dev, defina DJANGO_DEBUG=True no .env.
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '@4v3$w%x3j-jh0@)3f=)g2yumi_-w%3&*g75pa-+*+*5l35yjs'
+# Defina DJANGO_SECRET_KEY nas variáveis de ambiente do servidor. A chave
+# abaixo só existe para não quebrar um `runserver` local sem .env configurado
+# — nunca é usada se DEBUG=False.
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or "django-insecure-dev-only-nao-use-em-producao"
+
+if not DEBUG and SECRET_KEY == "django-insecure-dev-only-nao-use-em-producao":
+    raise RuntimeError(
+        "DJANGO_SECRET_KEY precisa ser definido nas variáveis de ambiente quando DEBUG=False."
+    )
 
 # Sistema de baixo risco (confirmação de presença de casamento) — liberado para
 # qualquer host. Troque pelo domínio definitivo quando ele estiver disponível,
@@ -120,6 +140,19 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Cada arquivo estático ganha um hash no nome (ex: painel.a3f9c1.css) sempre
+# que o conteúdo muda, então o navegador nunca serve uma versão em cache
+# desatualizada depois de um novo `collectstatic` — problema que já
+# aconteceu aqui antes.
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
+    },
+}
 
 # Login da página interna de convites (aberta a qualquer usuário autenticado,
 # não só staff — diferente do /admin/, que exige is_staff).

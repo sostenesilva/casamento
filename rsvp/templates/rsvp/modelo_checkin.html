@@ -1,0 +1,154 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check-in do dia da festa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Marcellus&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --color-green-dark: #2c3419;
+            --color-green-sage: #7f8f6c;
+            --color-green-sage-dark: #66765a;
+            --color-text: #3a3a30;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: var(--color-text);
+            margin: 0;
+            padding: 1.5rem;
+            background: #f7f7f5;
+        }
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        .toolbar h1 {
+            font-family: 'Marcellus', serif;
+            font-size: 1.3rem;
+            color: var(--color-green-dark);
+            margin: 0;
+        }
+        .toolbar .sub { font-size: 0.8rem; color: #777; margin-top: 2px; }
+        .btn-imprimir {
+            background: var(--color-green-sage-dark);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.55em 1.1em;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .btn-imprimir:hover { background: var(--color-green-dark); }
+        .grid {
+            columns: 2;
+            column-gap: 1rem;
+        }
+        .cartao {
+            break-inside: avoid;
+            page-break-inside: avoid;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 0.6rem 0.75rem;
+            margin-bottom: 0.75rem;
+            background: #fff;
+        }
+        .cartao-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 0.3rem;
+            margin-bottom: 0.4rem;
+        }
+        .cartao-header .numero { font-size: 1.1rem; font-weight: 600; color: var(--color-green-dark); }
+        .cartao-header .meta { font-size: 0.72rem; color: #777; text-align: right; }
+        .linha-convidado {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.85rem;
+            padding: 0.15rem 0;
+        }
+        .check-box {
+            display: inline-block;
+            width: 13px;
+            height: 13px;
+            border: 1.3px solid var(--color-text);
+            border-radius: 2px;
+            flex: 0 0 auto;
+        }
+        .tag-online {
+            font-size: 0.62rem;
+            color: var(--color-green-sage-dark);
+            border: 1px solid var(--color-green-sage);
+            border-radius: 999px;
+            padding: 0 0.4em;
+            white-space: nowrap;
+        }
+        .sem-esperados { font-size: 0.8rem; color: #999; font-style: italic; }
+        .obs {
+            margin-top: 0.4rem;
+            font-size: 0.75rem;
+            color: #888;
+            border-top: 1px dashed #ddd;
+            padding-top: 0.3rem;
+        }
+        .obs .linha {
+            display: inline-block;
+            border-bottom: 1px solid #bbb;
+            min-width: 100%;
+            height: 1em;
+        }
+
+        @media print {
+            body { background: #fff; padding: 0.4cm; }
+            .toolbar .btn-imprimir { display: none; }
+            .cartao { border-color: #999; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toolbar">
+        <div>
+            <h1>Check-in — dia da festa</h1>
+            <div class="sub">{{ total_invites }} convites · {{ total_expected_guests }} convidados esperados · marque quem chegou</div>
+        </div>
+        <button type="button" class="btn-imprimir no-print" onclick="window.print()">Imprimir</button>
+    </div>
+
+    <div class="grid">
+        {% for row in rows %}
+        <div class="cartao">
+            <div class="cartao-header">
+                <span class="numero">Convite {{ row.invite.number }}</span>
+                <span class="meta">{{ row.invite.num_passes }} senha{{ row.invite.num_passes|pluralize }} · {{ row.invite.get_invite_type_display }}</span>
+            </div>
+
+            {% if row.expected %}
+            {% for g in row.expected %}
+            <div class="linha-convidado">
+                <span class="check-box"></span>
+                <span>{{ g.name }}</span>
+                {% if g.was_confirmed %}<span class="tag-online">confirmou online</span>{% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="sem-esperados">Nenhum convidado esperado cadastrado.</p>
+            {% endif %}
+
+            <div class="obs">Outros / observações: <span class="linha"></span></div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+
+</html>
