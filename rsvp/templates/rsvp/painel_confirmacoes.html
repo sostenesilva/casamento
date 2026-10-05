@@ -14,9 +14,10 @@
   .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
   .badge-ok { background: #d7f5df; color: #16702c; }
   .badge-pending { background: #eee; color: #666; }
-  .badge-warn { background: #fdeecb; color: #8a5a00; }
-  .expected-not-confirmed { opacity: 0.6; }
-  .confirmed-mismatch { color: #8a5a00; font-weight: bold; }
+  ul.slot-list { list-style: none; padding-left: 0; }
+  ul.slot-list li { padding: 2px 0; }
+  ul.slot-list .sem-esperado { color: #999; font-style: italic; }
+  ul.slot-list .arrow { color: #999; padding: 0 4px; }
 </style>
 {% endblock %}
 
@@ -41,13 +42,12 @@
       <th>Convite</th>
       <th>Senhas</th>
       <th>Status</th>
-      <th>Convidados esperados (uso interno)</th>
-      <th>Convidados confirmados (site)</th>
+      <th>Esperado × confirmado (por senha)</th>
     </tr>
   </thead>
   <tbody>
     {% for row in rows %}
-    <tr class="painel-row" data-search="{{ row.invite.number }} {% for g in row.expected %}{{ g.name }} {% endfor %}{% for g in row.confirmed %}{{ g.name }} {% endfor %}">
+    <tr class="painel-row" data-search="{{ row.invite.number }} {% for slot in row.slots %}{{ slot.expected_name }} {{ slot.confirmed_name }} {% endfor %}">
       <td>
         <a href="{% url 'admin:rsvp_invite_change' row.invite.pk %}">{{ row.invite.number }}</a>
       </td>
@@ -60,33 +60,20 @@
         {% endif %}
       </td>
       <td>
-        {% if row.expected %}
-        <ul>
-          {% for g in row.expected %}
-          <li class="{% if not g.was_confirmed %}expected-not-confirmed{% endif %}">
-            {{ g.slot }}. <a href="{% url 'admin:rsvp_expectedguest_change' g.pk %}">{{ g.name }}</a>
-            {% if g.was_confirmed %}<span class="badge badge-ok">confirmado</span>{% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <em>Nenhum cadastrado</em>
-        {% endif %}
-      </td>
-      <td>
-        {% if row.confirmed %}
-        <ul>
-          {% for g in row.confirmed %}
+        <ul class="slot-list">
+          {% for slot in row.slots %}
           <li>
-            {{ g.slot }}.
-            <a href="{% url 'admin:rsvp_guest_change' g.pk %}" {% if not g.matches_expected %}class="confirmed-mismatch"{% endif %}>{{ g.name }}</a>
-            {% if not g.matches_expected %}<span class="badge badge-warn" title="Não bate com nenhum nome esperado">nome diferente</span>{% endif %}
+            <strong>{{ slot.slot }}.</strong>
+            {% if slot.expected_name %}{{ slot.expected_name }}{% else %}<span class="sem-esperado">(sem esperado cadastrado)</span>{% endif %}
+            {% if slot.is_confirmed %}
+              <span class="arrow">→</span> {{ slot.confirmed_name }}
+              <span class="badge badge-ok">confirmado</span>
+            {% else %}
+              <span class="badge badge-pending">pendente</span>
+            {% endif %}
           </li>
           {% endfor %}
         </ul>
-        {% else %}
-        <em>Ainda não confirmado</em>
-        {% endif %}
       </td>
     </tr>
     {% endfor %}

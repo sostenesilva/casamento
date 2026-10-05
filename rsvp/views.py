@@ -30,19 +30,17 @@ def _build_invite_rows(invites):
     for invite in invites:
         expected = list(invite.expected_guests.all())
         confirmed = list(invite.guests.all())
-        confirmed_names = {g.name.strip().lower() for g in confirmed}
-        expected_names = {g.name.strip().lower() for g in expected}
-
-        for g in expected:
-            g.was_confirmed = g.name.strip().lower() in confirmed_names
-        for g in confirmed:
-            g.matches_expected = g.name.strip().lower() in expected_names
 
         if invite.confirmed:
             confirmed_invites += 1
         total_expected_guests += len(expected)
         total_confirmed_guests += len(confirmed)
 
+        # A correlação entre "esperado" e "confirmado" é pela posição da
+        # senha (slot), nunca pelo nome: quem confirma pode digitar um nome
+        # diferente do que estava anotado internamente (ex.: "Tio Arnaldo"
+        # esperado x "Arnaldo Silva Santos" confirmado) e ainda assim é a
+        # mesma senha/pessoa.
         expected_by_slot = {g.slot: g.name for g in expected}
         confirmed_by_slot = {g.slot: g.name for g in confirmed}
         slots = [
@@ -50,6 +48,7 @@ def _build_invite_rows(invites):
                 "slot": slot,
                 "expected_name": expected_by_slot.get(slot, ""),
                 "confirmed_name": confirmed_by_slot.get(slot, ""),
+                "is_confirmed": bool(confirmed_by_slot.get(slot)),
             }
             for slot in range(1, invite.num_passes + 1)
         ]

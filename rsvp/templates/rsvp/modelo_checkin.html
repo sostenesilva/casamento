@@ -72,7 +72,7 @@
         .cartao-header .meta { font-size: 0.72rem; color: #777; text-align: right; }
         .linha-convidado {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 0.45rem;
             font-size: 0.85rem;
             padding: 0.15rem 0;
@@ -81,17 +81,16 @@
             display: inline-block;
             width: 13px;
             height: 13px;
+            margin-top: 2px;
             border: 1.3px solid var(--color-text);
             border-radius: 2px;
             flex: 0 0 auto;
         }
-        .tag-online {
-            font-size: 0.62rem;
+        .tag-confirmado {
+            display: block;
+            font-size: 0.68rem;
             color: var(--color-green-sage-dark);
-            border: 1px solid var(--color-green-sage);
-            border-radius: 999px;
-            padding: 0 0.4em;
-            white-space: nowrap;
+            margin-top: 1px;
         }
         .sem-esperados { font-size: 0.8rem; color: #999; font-style: italic; }
         .obs {
@@ -134,12 +133,18 @@
             </div>
 
             {% if row.expected %}
-            {% for g in row.expected %}
+            {% for slot in row.slots %}
+            {% if slot.expected_name or slot.is_confirmed %}
             <div class="linha-convidado">
                 <span class="check-box"></span>
-                <span>{{ g.name }}</span>
-                {% if g.was_confirmed %}<span class="tag-online">confirmou online</span>{% endif %}
+                <span>
+                    {{ slot.expected_name|default:"(sem nome esperado)" }}
+                    {% if slot.is_confirmed %}
+                    <span class="tag-confirmado">✓ confirmou como: {{ slot.confirmed_name }}</span>
+                    {% endif %}
+                </span>
             </div>
+            {% endif %}
             {% endfor %}
             {% else %}
             <p class="sem-esperados">Nenhum convidado esperado cadastrado.</p>
