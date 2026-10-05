@@ -70,27 +70,44 @@
         }
         .cartao-header .numero { font-size: 1.1rem; font-weight: 600; color: var(--color-green-dark); }
         .cartao-header .meta { font-size: 0.72rem; color: #777; text-align: right; }
+        .linha-colunas {
+            display: grid;
+            grid-template-columns: 15px 1.3fr 1fr;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .cabecalho-colunas {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #999;
+            padding-bottom: 2px;
+            margin-bottom: 2px;
+            border-bottom: 1px solid #eee;
+        }
         .linha-convidado {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.45rem;
             font-size: 0.85rem;
-            padding: 0.15rem 0;
+            padding: 0.2rem 0;
         }
         .check-box {
             display: inline-block;
             width: 13px;
             height: 13px;
-            margin-top: 2px;
             border: 1.3px solid var(--color-text);
             border-radius: 2px;
             flex: 0 0 auto;
         }
-        .tag-confirmado {
-            display: block;
-            font-size: 0.68rem;
-            color: var(--color-green-sage-dark);
-            margin-top: 1px;
+        .col-confirmado { font-weight: 500; }
+        .col-esperado {
+            font-size: 0.72rem;
+            color: #888;
+            font-style: italic;
+        }
+        .linha-preencher {
+            display: inline-block;
+            border-bottom: 1px solid #bbb;
+            width: 90%;
+            height: 1em;
         }
         .sem-esperados { font-size: 0.8rem; color: #999; font-style: italic; }
         .obs {
@@ -132,22 +149,23 @@
                 <span class="meta">{{ row.invite.num_passes }} senha{{ row.invite.num_passes|pluralize }} · {{ row.invite.get_invite_type_display }}</span>
             </div>
 
-            {% if row.expected %}
-            {% for slot in row.slots %}
-            {% if slot.expected_name or slot.is_confirmed %}
-            <div class="linha-convidado">
-                <span class="check-box"></span>
-                <span>
-                    {{ slot.expected_name|default:"(sem nome esperado)" }}
-                    {% if slot.is_confirmed %}
-                    <span class="tag-confirmado">✓ confirmou como: {{ slot.confirmed_name }}</span>
-                    {% endif %}
-                </span>
+            {% if row.slots %}
+            <div class="linha-colunas cabecalho-colunas">
+                <span></span>
+                <span>Confirmado</span>
+                <span>Esperado (ref.)</span>
             </div>
-            {% endif %}
+            {% for slot in row.slots %}
+            <div class="linha-colunas linha-convidado">
+                <span class="check-box"></span>
+                <span class="col-confirmado">
+                    {% if slot.confirmed_name %}{{ slot.confirmed_name }}{% else %}<span class="linha-preencher"></span>{% endif %}
+                </span>
+                <span class="col-esperado">{{ slot.expected_name|default:"—" }}</span>
+            </div>
             {% endfor %}
             {% else %}
-            <p class="sem-esperados">Nenhum convidado esperado cadastrado.</p>
+            <p class="sem-esperados">Nenhuma senha cadastrada.</p>
             {% endif %}
 
             <div class="obs">Outros / observações: <span class="linha"></span></div>
